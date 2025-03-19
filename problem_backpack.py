@@ -11,12 +11,18 @@ from itertools import combinations, chain
 
 class St_item:
     def __init__(self, i_n_value: int = 0, i_ln_cost: List[int] = list()):
-        self.n_value = i_n_value
-        self.ln_cost = i_ln_cost
+        self.n_value : int = i_n_value
+        self.ln_cost : int = i_ln_cost
+        #compute an efficiency metric
+        if i_n_value != 0:
+            logging.debug(f"{sum(i_ln_cost)} | {i_n_value}")
+            self.n_cost_over_value : float = 1.0 *sum(i_ln_cost) / i_n_value
+        else:
+            self.n_cost_over_value : float = 0.0
         return
 
     def __repr__(self):
-        return f"Value: {self.n_value} | Cost: {self.ln_cost}"
+        return f"Value: {self.n_value} | Cost: {self.ln_cost} | Efficiency: {self.n_cost_over_value}"
     
     def __add__(self, other):
         if not isinstance(other, St_item):
@@ -111,10 +117,10 @@ class Cl_backpack:
 
         # Create St_item objects for each item and add them to lst_item
         for ln_value, lln_cost in zip(i_ln_value, i_lln_cost):
-            new_item = St_item()
-            new_item.n_value = ln_value
-            new_item.ln_cost = lln_cost
+            new_item = St_item( ln_value, lln_cost)
             self.lst_item.append(new_item)
+
+        self.lst_item = sorted(self.lst_item, key=lambda solution: solution.n_cost_over_value, reverse=False)
 
         self.n_item_num = len(i_ln_value)
 
@@ -154,8 +160,8 @@ class Cl_backpack:
         """
         Show the details of items in the backpack.
         """
-        for n_cnt, item in enumerate(self.lst_item):
-            logging.info(f"Item {n_cnt:3} | Value: {item.n_value:5} | Cost: {item.ln_cost}")
+        for n_cnt, st_item in enumerate(self.lst_item):
+            logging.info(f"Item {n_cnt:3} | Value: {st_item}")
         return False
 
 def generate_combinations(n: int) -> iter:
@@ -178,8 +184,11 @@ def backpack_allocator() -> bool:
     c_n_random_seed = 42
     random.seed(c_n_random_seed)
 
-    c_n_item_num = 10
-    c_n_item_cost_dimension = 5
+    #c_n_item_num = 10
+    #c_n_item_cost_dimension = 5
+
+    c_n_item_num = 100
+    c_n_item_cost_dimension = 50
     c_n_cost_max = c_n_item_num *20
 
     lln_item_cost = randint(1, 50 + 1, size=(c_n_item_num, c_n_item_cost_dimension))
@@ -191,7 +200,9 @@ def backpack_allocator() -> bool:
 
     my_backpack.show()
 
-    brute_force( my_backpack )
+    #brute_force( my_backpack )
+
+    greedy_solver( my_backpack, 100 )
 
     return False #OK
 
@@ -247,6 +258,47 @@ def brute_force(i_cl_backpack : Cl_backpack ) -> bool:
     #0              2,      3,  4,  5,      6,            8
 
     return
+
+def greedy_solver(i_cl_backpack: Cl_backpack, max_num_step: int) -> St_solution:
+    """
+    Solves the backpack problem using a greedy algorithm and a maximum number of steps.
+
+    Parameters:
+    i_cl_backpack (Cl_backpack): The backpack object containing items and constraints.
+    max_num_step (int): Maximum number of steps to take.
+
+    Returns:
+    St_solution: The optimal solution within the given constraints.
+    """
+    st_solution = St_solution()
+
+    # Sort items based on value-to-cost ratio
+    sorted_items = sorted(
+        enumerate(i_cl_backpack.lst_item),
+        key=lambda x: x[1].n_cost_over_value,
+    )
+
+    # Accumulate items while considering the cost constraints and the max number of steps
+    for step, (index, item) in enumerate(sorted_items):
+        if step >= max_num_step:
+            logging.info(f"Max steps {max_num_step} reached")
+            break
+
+        # Check if adding this item will exceed the backpack's cost limit
+        st_accumulate, st_remaining = i_cl_backpack.accumulate_items_with_cost_left(
+            st_solution.ln_index + [index]
+        )
+
+        if st_remaining.is_underflow():
+            logging.debug(f"Item {index} would exceed cost constraints")
+            continue
+
+        # Add the item to the solution
+        st_solution.ln_index.append(index)
+        st_solution.st_content = st_accumulate
+
+    logging.info(f"Greedy Solution: {st_solution}")
+    return st_solution
 
 
 if __name__ == "__main__":
