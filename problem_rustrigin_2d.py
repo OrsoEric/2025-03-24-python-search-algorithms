@@ -21,12 +21,13 @@ class Cl_plotter:
         self.title = title
         self.xlabel = xlabel
         self.ylabel = ylabel
-        self.steps = []
-        self.fitness_values = []
-        self.solution_values = []
-        self.solution_points = []
+        self.ln_steps = []
+        self.ln_point = []
+        self.ln_error = []
+        self.ln_tweak = []
+        
 
-    def add_solution(self, step: int, i_n_error: float, i_ln_point: List[float]):
+    def add_solution(self, step: int, i_ln_point: List[float], i_n_error: float, i_n_tweak_strenght : float ):
         """
         Adds a solution point to the plotter's data.
 
@@ -36,9 +37,12 @@ class Cl_plotter:
             solution_value: The solution fitness.
             solution_point: The solution vector.
         """
-        self.steps.append(step)
-        self.solution_values.append(abs(i_n_error))
-        self.solution_points.append(i_ln_point)
+        self.ln_steps.append(step)
+        self.ln_point.append(i_ln_point)
+        self.ln_error.append(abs(i_n_error))
+        self.ln_tweak.append(abs(i_n_tweak_strenght))
+
+        return
 
     def generate(self, filename="search_plot.png"):
         """
@@ -50,25 +54,30 @@ class Cl_plotter:
         plt.figure(figsize=(12, 6))
 
         plt.subplot(1, 2, 1)
-        x_values = [point[0] for point in self.solution_points]
-        y_values = [point[1] for point in self.solution_points]
-        plt.scatter(x_values, y_values, marker='x')
+        x_values = [point[0] for point in self.ln_point]
+        y_values = [point[1] for point in self.ln_point]
+        plt.scatter(x_values, y_values, marker='.', label='2D Slice of solution point')
         plt.title("Solution Space Search")
         plt.xlabel("X Dimension")
         plt.ylabel("Y Dimension")
         plt.grid(True)
+        plt.legend()
 
         plt.subplot(1, 2, 2)
-        plt.scatter(self.steps, self.solution_values, marker='x', color='red')
-        plt.title("Fitness vs Step")
+        plt.scatter(self.ln_steps, self.ln_error, marker='x', color='red', label='Error')
+        plt.scatter(self.ln_steps, self.ln_tweak, marker='.', color='green', label='Tweak')
+        plt.title("Error vs Step")
         plt.xlabel(self.xlabel)
-        plt.ylabel("Fitness")
+        plt.ylabel("Error")
         plt.yscale('log')
         plt.grid(True)
+        plt.legend()
 
         plt.tight_layout()
         plt.savefig(filename)
         #plt.show()
+
+        return
 
 def rastrigin(i_ln_input, c_n=10):
     """NumPy Rastrigin test function"""
@@ -86,25 +95,6 @@ def tweak(i_ln_input: List[float], i_n_std: float) -> List[float]:
     ln_tweaked = i_ln_input + ln_delta
     return ln_tweaked
 
-def test_random_walk( i_n_step : int = 10000 ) -> bool:
-    
-    cl_plotter = Cl_plotter()
-
-    n_dimensions = 2
-    n_std_bias = 0.1
-    ln_best_solution = random_solution( n_dimensions, 5 )
-    
-    for n_cnt in range(i_n_step):
-        ln_best_solution = tweak( ln_best_solution, n_std_bias)
-        n_best_fitness = fitness( ln_best_solution )
-        cl_plotter.add_solution( n_cnt, n_best_fitness, ln_best_solution )
-
-        logging.info(f"Step: {n_cnt} | Fitness: {n_best_fitness:.3f} | Solution: {ln_best_solution}")
-
-    cl_plotter.generate()
-
-    return False #Ok
-
 def solver( i_n_dimensions : int = 2, i_n_step_max : int = 100 ):
 
     cl_plotter = Cl_plotter()
@@ -117,12 +107,12 @@ def solver( i_n_dimensions : int = 2, i_n_step_max : int = 100 ):
     n_target_fitness = 0.0
 
     n_std_bias : float = 0.0
-    n_std_gain : float = 0.1
+    n_std_gain : float = 0.9
     n_error_power : int = 1
     n_cnt_worse = 0
     n_lambda_candidates : int = 5
 
-    n_std_tweak_max = 1.0
+    n_std_tweak_max = 0.3
     n_cnt_std_tweak_clipped = 0
 
     for n_step in range(i_n_step_max):
@@ -163,7 +153,7 @@ def solver( i_n_dimensions : int = 2, i_n_step_max : int = 100 ):
         ln_best_solution = lm_best_solution_temp
         n_best_fitness = n_best_fitness_temp
 
-        cl_plotter.add_solution(n_step, n_error, ln_best_solution) # Add the solution to the plotter.
+        cl_plotter.add_solution(n_step, ln_best_solution, n_error, n_std_tweak) # Add the solution to the plotter.
 
         logging.info(f"Step: {n_step} | Fitness: {n_best_fitness:.3f} | Solution: {ln_best_solution}")
 
@@ -186,9 +176,6 @@ if __name__ == "__main__":
 
     n_dimensions = 2
     n_step_max = 10000
-
-
-    #test_random_walk()
 
     solver(n_dimensions, n_step_max)
 
