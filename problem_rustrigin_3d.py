@@ -107,10 +107,10 @@ def solver( i_n_dimensions : int = 2, i_n_step_max : int = 100 ):
     n_target_fitness = 0.0
 
     n_std_bias : float = 0.0
-    n_std_gain : float = 0.9
+    n_std_gain : float = 0.1
     n_error_power : int = 1
     n_cnt_worse = 0
-    n_lambda_candidates : int = 5
+    n_lambda_candidates : int = 10
 
     n_std_tweak_max = 0.3
     n_cnt_std_tweak_clipped = 0
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     )
     logging.info("Begin")
 
-    n_dimensions = 2
+    n_dimensions = 3
     n_step_max = 10000
 
     solver(n_dimensions, n_step_max)
