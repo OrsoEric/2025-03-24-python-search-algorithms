@@ -120,21 +120,28 @@ def solver( i_n_dimensions : int = 2, i_n_step_max : int = 100 ):
     n_std_gain : float = 0.1
     n_error_power : int = 1
     n_cnt_worse = 0
-    n_lambda_candidates : int = 3
+    n_lambda_candidates : int = 5
+
+    n_std_tweak_max = 1.0
+    n_cnt_std_tweak_clipped = 0
 
     for n_step in range(i_n_step_max):
-
-
-        n_error = n_target_fitness - n_best_fitness # Calculate the error between the target and current best fitness.
+        # Calculate the error between the target and current best fitness.
+        n_error = n_target_fitness - n_best_fitness 
 
         # Adjust the standard deviation of the tweak based on the error.
         n_std_tweak = n_std_bias +n_std_gain * (abs(n_target_fitness - n_best_fitness) ** n_error_power)
+        #this can blow up to infinity if error is big
+        if (n_std_tweak > n_std_tweak_max):
+            n_std_tweak = n_std_tweak_max
+            n_cnt_std_tweak_clipped += 1
 
         lln_candidates : List[List[float]] = list()
         for n_lambda_attempt in range(n_lambda_candidates):
             ln_candiate = tweak(ln_best_solution, n_std_tweak)
             lln_candidates.append(ln_candiate)
 
+        #COMA LAMBDA always discard the seed solution
         lm_best_solution_temp = None
         n_best_fitness_temp = None
 
@@ -161,6 +168,8 @@ def solver( i_n_dimensions : int = 2, i_n_step_max : int = 100 ):
         logging.info(f"Step: {n_step} | Fitness: {n_best_fitness:.3f} | Solution: {ln_best_solution}")
 
     print(f"Picked worse solutions: {n_cnt_worse}")
+    print(f"Clipped STD Tweak: {n_cnt_std_tweak_clipped}")
+
     cl_plotter.generate() # Generate and display the plots.
     return ln_best_solution, n_best_fitness
 
