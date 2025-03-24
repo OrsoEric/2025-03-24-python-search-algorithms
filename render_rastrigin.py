@@ -1,18 +1,18 @@
-import numpy as np
+import numpy
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-def rastrigin(x, A=10):
+def rastrigin(i_ln_input, c_n=10):
     """NumPy Rastrigin test function"""
-    return np.sum(A - A * np.cos(2 * np.pi * x) + x**2, axis=0)
+    return -numpy.sum(c_n - c_n * numpy.cos(2 * numpy.pi * i_ln_input) + i_ln_input**2, axis=0)
 
 # Create a grid of x and y values
-x = np.linspace(-5.12, 5.12, 100)
-y = np.linspace(-5.12, 5.12, 100)
-X, Y = np.meshgrid(x, y)
+x = numpy.linspace(-5.12, 5.12, 100)
+y = numpy.linspace(-5.12, 5.12, 100)
+X, Y = numpy.meshgrid(x, y)
 
-# Calculate the z values using the Rastrigin functionpython r   
-Z = rastrigin(np.array([X, Y]))
+# Calculate the z values using the Rastrigin functionumpyython r   
+Z = rastrigin(numpy.array([X, Y]))
 
 # Create the 3D plot
 fig = plt.figure(figsize=(10, 8))
