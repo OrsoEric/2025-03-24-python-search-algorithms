@@ -59,7 +59,7 @@ class Cl_plotter:
         plt.grid(True)
 
         plt.subplot(1, 2, 2)
-        plt.plot(self.steps, self.solution_values, marker='x', color='red')
+        plt.scatter(self.steps, self.solution_values, marker='x', color='red')
         plt.title("Fitness vs Step")
         plt.xlabel(self.xlabel)
         plt.ylabel("Fitness")
@@ -82,11 +82,11 @@ def fitness(i_ln_input: List[float]) -> float:
 
 def tweak(i_ln_input: List[float], i_n_std: float) -> List[float]:
     n_dimensions = len(i_ln_input)
-    n_delta = random_solution(n_dimensions, i_n_std)
-    ln_tweaked = i_ln_input + n_delta
+    ln_delta = random_solution(n_dimensions, i_n_std)
+    ln_tweaked = i_ln_input + ln_delta
     return ln_tweaked
 
-def test_random_walk( i_n_step : int = 100 ) -> bool:
+def test_random_walk( i_n_step : int = 10000 ) -> bool:
     
     cl_plotter = Cl_plotter()
 
@@ -105,16 +105,64 @@ def test_random_walk( i_n_step : int = 100 ) -> bool:
 
     return False #Ok
 
-def solver():
+def solver( i_n_dimensions : int = 2, i_n_step_max : int = 100 ):
 
-
-    n_dimensions = 2
+    cl_plotter = Cl_plotter()
 
     #initial solution
+    n_dimensions = 2
+    ln_best_solution = random_solution( n_dimensions, 5 )
+    n_best_fitness = fitness(ln_best_solution)
+
+    n_target_fitness = 0.0
+
+    n_std_bias : float = 0.0
+    n_std_gain : float = 0.1
+    n_error_power : int = 1
+    n_cnt_worse = 0
+    n_lambda_candidates : int = 3
+
+    for n_step in range(i_n_step_max):
 
 
+        n_error = n_target_fitness - n_best_fitness # Calculate the error between the target and current best fitness.
 
-    pass
+        # Adjust the standard deviation of the tweak based on the error.
+        n_std_tweak = n_std_bias +n_std_gain * (abs(n_target_fitness - n_best_fitness) ** n_error_power)
+
+        lln_candidates : List[List[float]] = list()
+        for n_lambda_attempt in range(n_lambda_candidates):
+            ln_candiate = tweak(ln_best_solution, n_std_tweak)
+            lln_candidates.append(ln_candiate)
+
+        lm_best_solution_temp = None
+        n_best_fitness_temp = None
+
+        #i'm discarding the previous solution
+        for ln_candidate in lln_candidates:
+            if lm_best_solution_temp is None:
+                lm_best_solution_temp = ln_candidate
+                n_best_fitness_temp = fitness(ln_candidate)
+            else:
+                n_new_fitness = fitness(ln_candidate) # Calculate the fitness of the new solution.
+                # Update the best solution if the new solution has a lower fitness.
+                if abs(n_target_fitness - n_new_fitness) < abs(n_target_fitness - n_best_fitness_temp):
+                    lm_best_solution_temp = ln_candidate
+                    n_best_fitness_temp = n_new_fitness
+
+        if (n_best_fitness_temp < n_best_fitness):
+            n_cnt_worse += 1
+
+        ln_best_solution = lm_best_solution_temp
+        n_best_fitness = n_best_fitness_temp
+
+        cl_plotter.add_solution(n_step, n_error, ln_best_solution) # Add the solution to the plotter.
+
+        logging.info(f"Step: {n_step} | Fitness: {n_best_fitness:.3f} | Solution: {ln_best_solution}")
+
+    print(f"Picked worse solutions: {n_cnt_worse}")
+    cl_plotter.generate() # Generate and display the plots.
+    return ln_best_solution, n_best_fitness
 
 
 
@@ -127,6 +175,11 @@ if __name__ == "__main__":
     )
     logging.info("Begin")
 
+    n_dimensions = 2
+    n_step_max = 10000
 
-    test_random_walk()
+
+    #test_random_walk()
+
+    solver(n_dimensions, n_step_max)
 
