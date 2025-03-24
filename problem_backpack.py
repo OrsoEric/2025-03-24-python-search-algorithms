@@ -9,20 +9,128 @@ from typing import List, Tuple
 
 from itertools import combinations, chain
 
+import matplotlib.pyplot as plt
+
+import time
+
+N_NUM_ITEM = 15
+N_NUM_DIMENSIONS = 3
+
+class Cl_step_tracker:
+    """
+    A class that tracks steps and prints the step count and elapsed time at exponentially increasing intervals.
+    """
+
+    def __init__(self):
+        """
+        Initializes the step tracker.
+        """
+        self.step_count = 0
+        self.next_print_step = 2
+        self.start_time = time.time()
+
+    def __call__(self):
+        """
+        Increments the step counter and prints information at exponentially increasing steps.
+        """
+        self.step_count += 1
+
+        if self.step_count == self.next_print_step:
+            elapsed_time = time.time() - self.start_time
+            print(f"Step: {self.step_count}, Elapsed Time: {elapsed_time:.4f} seconds")
+            self.next_print_step *= 2
+
+
+
+class Plotter:
+    def __init__(self, title="Plot", xlabel="Step", ylabel="Metrics"):
+        self.title = title
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+        self.steps = []
+        self.values = []
+        self.costs = []
+        self.ln_cost_min: List[int] = list()
+        self.ln_cost_max: List[int] = list()
+
+    def add_solution(self, step, solution):
+        self.steps.append(step)
+        self.values.append(solution.st_content.n_value)
+        self.costs.append(solution.st_content.n_total_cost)
+        self.ln_cost_min.append(solution.st_content.n_cost_min)
+        self.ln_cost_max.append(solution.st_content.n_cost_max)
+
+    def generate(self, filename="plot.png"):
+        plt.figure(figsize=(12, 6))  # Adjust figure size for two subplots
+
+        # First subplot: Step vs. Metrics
+        plt.subplot(1, 2, 1)  # 1 row, 2 columns, first subplot
+        plt.scatter(self.steps, self.values, marker='o', label='Value')
+        plt.scatter(self.steps, self.costs, marker='x', label='Sum')
+        plt.scatter(self.steps, self.ln_cost_min, marker='.', label='Min')
+        plt.scatter(self.steps, self.ln_cost_max, marker='.', label='Max')
+        plt.title(self.title)
+        plt.xlabel(self.xlabel)
+        plt.ylabel(self.ylabel)
+        plt.grid(True)
+        plt.legend()
+
+        # Second subplot: Value vs. Cost with color coding
+        plt.subplot(1, 2, 2)  # 1 row, 2 columns, second subplot
+        green_x = []
+        green_y = []
+        red_x = []
+        red_y = []
+
+        for i in range(len(self.costs)):
+            if self.ln_cost_min[i] >= 0:
+                green_x.append(self.costs[i])
+                green_y.append(self.values[i])
+            else:
+                red_x.append(self.costs[i])
+                red_y.append(self.values[i])
+
+        plt.scatter(red_x, red_y, marker='x', color='red', label="min < 0")
+        plt.scatter(green_x, green_y, marker='+', color='green', label="min >= 0")
+        
+
+        plt.title("Value vs. Remaining Cost")
+        plt.xlabel("Remaining Cost")
+        plt.ylabel("Value")
+        plt.grid(True)
+        plt.legend()
+
+        plt.tight_layout()  # Adjust spacing between subplots
+        plt.savefig(filename)
+        plt.show()
+
 class St_item:
     def __init__(self, i_n_value: int = 0, i_ln_cost: List[int] = list()):
         self.n_value : int = i_n_value
         self.ln_cost : int = i_ln_cost
+
+        self.n_total_cost = 0
+        self.n_cost_min = 0
+        self.n_cost_max = 0
+
+        if len(i_ln_cost) > 0:
+            #accumulate cost across all cost dimensions
+            self.n_total_cost = sum(i_ln_cost)
+            #minimum across all dimensions
+            self.n_cost_min = min(i_ln_cost)
+            #maximum across all dimensions
+            self.n_cost_max = max(i_ln_cost)
+
         #compute an efficiency metric
         if i_n_value != 0:
             logging.debug(f"{sum(i_ln_cost)} | {i_n_value}")
-            self.n_cost_over_value : float = 1.0 *sum(i_ln_cost) / i_n_value
+            self.n_cost_over_value : float = 1.0 *self.n_total_cost / i_n_value
         else:
             self.n_cost_over_value : float = 0.0
         return
 
     def __repr__(self):
-        return f"Value: {self.n_value} | Cost: {self.ln_cost} | Efficiency: {self.n_cost_over_value}"
+        return f"Value: {self.n_value} | Cost: {self.n_total_cost} {self.ln_cost} | Efficiency: {self.n_cost_over_value}"
     
     def __add__(self, other):
         if not isinstance(other, St_item):
@@ -187,8 +295,8 @@ def backpack_allocator() -> bool:
     #c_n_item_num = 10
     #c_n_item_cost_dimension = 5
 
-    c_n_item_num = 100
-    c_n_item_cost_dimension = 50
+    c_n_item_num = N_NUM_ITEM
+    c_n_item_cost_dimension = N_NUM_DIMENSIONS
     c_n_cost_max = c_n_item_num *20
 
     lln_item_cost = randint(1, 50 + 1, size=(c_n_item_num, c_n_item_cost_dimension))
@@ -200,9 +308,9 @@ def backpack_allocator() -> bool:
 
     my_backpack.show()
 
-    #brute_force( my_backpack )
+    brute_force( my_backpack )
 
-    greedy_solver( my_backpack, 100 )
+    #greedy_solver( my_backpack, 100 )
 
     return False #OK
 
@@ -217,13 +325,20 @@ def brute_force(i_cl_backpack : Cl_backpack ) -> bool:
     Sort both by value
     """
 
+    # Example usage:
+    cl_tracker = Cl_step_tracker()
+
+
     lst_valid : List[St_solution] = list()
     lst_invalid : List[St_solution] = list()
 
+    cl_plotter = Plotter(title="Brute Force: Value, Cost Remaining vs. Step", xlabel="Step", ylabel="Metrics")
+
     # Example usage:
     n_item_num = i_cl_backpack.n_item_num
-    combinations_generator = generate_combinations( n_item_num )
-    for ln_item_index in combinations_generator:
+    for n_step_cnt, ln_item_index in enumerate(generate_combinations( n_item_num )):
+        cl_tracker()
+        #print(f"step: {n_step_cnt} | {ln_item_index}")
         st_solution = St_solution()
 
         st_used, st_remaining = i_cl_backpack.accumulate_items_with_cost_left(ln_item_index)
@@ -240,6 +355,10 @@ def brute_force(i_cl_backpack : Cl_backpack ) -> bool:
             lst_valid.append(st_solution)
 
         logging.debug(f"Solution: {st_solution}")
+        cl_plotter.add_solution(n_step_cnt + 1, st_solution)
+
+    cl_tracker()
+    cl_plotter.generate("brute_force_plot.png")
 
     lst_valid = sorted(lst_valid, key=lambda solution: solution.st_content.n_value, reverse=True)
     lst_invalid = sorted(lst_invalid, key=lambda solution: solution.st_content.n_value, reverse=True)
@@ -272,6 +391,9 @@ def greedy_solver(i_cl_backpack: Cl_backpack, max_num_step: int) -> St_solution:
     """
     st_solution = St_solution()
 
+    cl_plotter = Plotter(title="Greedy Solver: Value, Cost vs. Step", xlabel="Step", ylabel="Metrics")
+
+
     # Sort items based on value-to-cost ratio
     sorted_items = sorted(
         enumerate(i_cl_backpack.lst_item),
@@ -297,14 +419,33 @@ def greedy_solver(i_cl_backpack: Cl_backpack, max_num_step: int) -> St_solution:
         st_solution.ln_index.append(index)
         st_solution.st_content = st_accumulate
 
+        cl_plotter.add_solution(step + 1, st_solution)
+
+    cl_plotter.generate("greedy_solver_plot.png")
     logging.info(f"Greedy Solution: {st_solution}")
     return st_solution
+
+def solver_(i_cl_backpack: Cl_backpack, max_num_step: int) -> St_solution:
+    """
+    
+    """
+
+
+    return
+
+
+class Cl_solver_tree:
+    def __init__(self):
+        pass
+
+
+
 
 
 if __name__ == "__main__":
     logging.basicConfig(
         filename="debug.log",
-        level=logging.DEBUG,
+        level=logging.INFO,
         format='[%(asctime)s] %(levelname)s %(module)s:%(lineno)d > %(message)s ',
         filemode='w'
     )
