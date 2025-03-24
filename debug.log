@@ -1,17 +1,17 @@
-[2025-03-24 11:25:40,841] INFO problem_backpack:452 > Begin 
-[2025-03-24 11:25:40,841] INFO problem_backpack:203 > Dimensions: 3 | Max Cost: 300 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item   0 | Value: Value: 53 | Cost: 27 [ 3 22  2] | Efficiency: 0.5094339622641509 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item   1 | Value: Value: 84 | Cost: 61 [38  2 21] | Efficiency: 0.7261904761904762 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item   2 | Value: Value: 92 | Cost: 67 [33 12 22] | Efficiency: 0.7282608695652174 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item   3 | Value: Value: 47 | Cost: 37 [ 7 21  9] | Efficiency: 0.7872340425531915 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item   4 | Value: Value: 89 | Cost: 83 [39 29 15] | Efficiency: 0.9325842696629213 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item   5 | Value: Value: 90 | Cost: 100 [36 40 24] | Efficiency: 1.1111111111111112 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item   6 | Value: Value: 60 | Cost: 72 [43  8 21] | Efficiency: 1.2 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item   7 | Value: Value: 71 | Cost: 97 [27 42 28] | Efficiency: 1.3661971830985915 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item   8 | Value: Value: 35 | Cost: 61 [39 18  4] | Efficiency: 1.7428571428571429 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item   9 | Value: Value: 44 | Cost: 78 [16 15 47] | Efficiency: 1.7727272727272727 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item  10 | Value: Value: 60 | Cost: 118 [44 25 49] | Efficiency: 1.9666666666666666 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item  11 | Value: Value: 9 | Cost: 46 [11 11 24] | Efficiency: 5.111111111111111 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item  12 | Value: Value: 14 | Cost: 81 [39 19 23] | Efficiency: 5.785714285714286 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item  13 | Value: Value: 8 | Cost: 84 [44  3 37] | Efficiency: 10.5 
-[2025-03-24 11:25:40,842] INFO problem_backpack:272 > Item  14 | Value: Value: 2 | Cost: 98 [24 44 30] | Efficiency: 49.0 
+[2025-03-24 12:44:11,752] INFO problem_backpack:452 > Begin 
+[2025-03-24 12:44:11,752] INFO problem_backpack:203 > Dimensions: 3 | Max Cost: 300 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item   0 | Value: Value: 53 | Cost: 27 [ 3 22  2] | Efficiency: 0.5094339622641509 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item   1 | Value: Value: 84 | Cost: 61 [38  2 21] | Efficiency: 0.7261904761904762 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item   2 | Value: Value: 92 | Cost: 67 [33 12 22] | Efficiency: 0.7282608695652174 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item   3 | Value: Value: 47 | Cost: 37 [ 7 21  9] | Efficiency: 0.7872340425531915 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item   4 | Value: Value: 89 | Cost: 83 [39 29 15] | Efficiency: 0.9325842696629213 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item   5 | Value: Value: 90 | Cost: 100 [36 40 24] | Efficiency: 1.1111111111111112 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item   6 | Value: Value: 60 | Cost: 72 [43  8 21] | Efficiency: 1.2 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item   7 | Value: Value: 71 | Cost: 97 [27 42 28] | Efficiency: 1.3661971830985915 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item   8 | Value: Value: 35 | Cost: 61 [39 18  4] | Efficiency: 1.7428571428571429 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item   9 | Value: Value: 44 | Cost: 78 [16 15 47] | Efficiency: 1.7727272727272727 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item  10 | Value: Value: 60 | Cost: 118 [44 25 49] | Efficiency: 1.9666666666666666 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item  11 | Value: Value: 9 | Cost: 46 [11 11 24] | Efficiency: 5.111111111111111 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item  12 | Value: Value: 14 | Cost: 81 [39 19 23] | Efficiency: 5.785714285714286 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item  13 | Value: Value: 8 | Cost: 84 [44  3 37] | Efficiency: 10.5 
+[2025-03-24 12:44:11,753] INFO problem_backpack:272 > Item  14 | Value: Value: 2 | Cost: 98 [24 44 30] | Efficiency: 49.0 

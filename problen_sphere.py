@@ -53,8 +53,14 @@ def search(n_steps: int, n_dimensions: int, n_std_start: float) -> Tuple[List[fl
         A tuple containing the best solution vector and its fitness value.
     """
     target_fitness = 0  # Target fitness to minimize (sum of squares = 0)
-    n_k_strength = 0.1  # Strength factor for adjusting the tweak standard deviation
-    n_error_power = 1 # power factor for adjusting the tweak standard deviation
+    n_lambda_candidates = 1
+    #width of correction independent of error
+    n_b_bias = 1/100
+    #width of correction proportional to error
+    n_k_error = 0  
+    #error is elevated to a power
+    n_error_power = 1
+
     ln_best_solution = numpy.random.normal(0, n_std_start, n_dimensions) # Initialize the best solution with random values.
     n_best_fitness = fitness(ln_best_solution) # Calculate the initial best fitness.
 
@@ -64,15 +70,19 @@ def search(n_steps: int, n_dimensions: int, n_std_start: float) -> Tuple[List[fl
         n_error = target_fitness - n_best_fitness # Calculate the error between the target and current best fitness.
 
         # Adjust the standard deviation of the tweak based on the error.
-        n_std_tweak = n_k_strength * (abs(target_fitness - n_best_fitness) ** n_error_power)
+        n_std_tweak = n_b_bias +n_k_error * (abs(target_fitness - n_best_fitness) ** n_error_power)
 
-        ln_new_solution = tweak(ln_best_solution, n_std_tweak) # Generate a new solution by tweaking the best solution.
-        n_new_fitness = fitness(ln_new_solution) # Calculate the fitness of the new solution.
+        lln_candidates : List[List[float]] = list()
+        for n_lambda_attempt in range(n_lambda_candidates):
+            ln_candiate = tweak(ln_best_solution, n_std_tweak)
+            lln_candidates.append(ln_candiate)
 
-        # Update the best solution if the new solution has a lower fitness.
-        if abs(target_fitness - n_new_fitness) < abs(target_fitness - n_best_fitness):
-            ln_best_solution = ln_new_solution
-            n_best_fitness = n_new_fitness
+        for ln_candidate in lln_candidates:
+            n_new_fitness = fitness(ln_candidate) # Calculate the fitness of the new solution.
+            # Update the best solution if the new solution has a lower fitness.
+            if abs(target_fitness - n_new_fitness) < abs(target_fitness - n_best_fitness):
+                ln_best_solution = ln_candidate
+                n_best_fitness = n_new_fitness
 
         plotter.add_solution(n_step, n_error, n_best_fitness, ln_best_solution) # Add the solution to the plotter.
 
@@ -80,6 +90,76 @@ def search(n_steps: int, n_dimensions: int, n_std_start: float) -> Tuple[List[fl
 
     plotter.generate() # Generate and display the plots.
     return ln_best_solution, n_best_fitness
+
+
+def search_coma_lambda(n_steps: int, n_dimensions: int, n_std_start: float) -> Tuple[List[float], float]:
+    """
+    Performs a stochastic search to find the minimum of the fitness function.
+
+    Args:
+        n_steps: The number of search steps.
+        n_dimensions: The dimensionality of the solution vector.
+        n_std_start: The initial standard deviation for the tweak function.
+
+    Returns:
+        A tuple containing the best solution vector and its fitness value.
+    """
+    target_fitness = 0  # Target fitness to minimize (sum of squares = 0)
+    n_lambda_candidates = 10
+    #width of correction independent of error
+    n_b_bias = 1/100
+    #width of correction proportional to error
+    n_k_error = 0  
+    #error is elevated to a power
+    n_error_power = 1
+    
+    ln_best_solution = numpy.random.normal(0, n_std_start, n_dimensions) # Initialize the best solution with random values.
+    n_best_fitness = fitness(ln_best_solution) # Calculate the initial best fitness.
+
+    plotter = Plotter() # Initialize the plotter for visualization.
+
+    n_cnt_worse = 0
+
+    for n_step in range(n_steps):
+        n_error = target_fitness - n_best_fitness # Calculate the error between the target and current best fitness.
+
+        # Adjust the standard deviation of the tweak based on the error.
+        n_std_tweak = n_b_bias +n_k_error * (abs(target_fitness - n_best_fitness) ** n_error_power)
+
+        lln_candidates : List[List[float]] = list()
+        for n_lambda_attempt in range(n_lambda_candidates):
+            ln_candiate = tweak(ln_best_solution, n_std_tweak)
+            lln_candidates.append(ln_candiate)
+
+        lm_best_solution_temp = None
+        n_best_fitness_temp = None
+
+        #i'm discarding the previous solution
+        for ln_candidate in lln_candidates:
+            if lm_best_solution_temp is None:
+                lm_best_solution_temp = ln_candidate
+                n_best_fitness_temp = fitness(ln_candidate)
+            else:
+                n_new_fitness = fitness(ln_candidate) # Calculate the fitness of the new solution.
+                # Update the best solution if the new solution has a lower fitness.
+                if abs(target_fitness - n_new_fitness) < abs(target_fitness - n_best_fitness_temp):
+                    lm_best_solution_temp = ln_candidate
+                    n_best_fitness_temp = n_new_fitness
+
+        if (n_best_fitness_temp < n_best_fitness):
+            n_cnt_worse += 1
+
+        ln_best_solution = lm_best_solution_temp
+        n_best_fitness = n_best_fitness_temp
+
+        plotter.add_solution(n_step, n_error, n_best_fitness, ln_best_solution) # Add the solution to the plotter.
+
+        print(f"Step {n_step + 1:3}: Error {n_error:.2f} | Change {n_best_fitness:.2f} | Solution: {ln_best_solution}") # Print the search progress.
+
+    print(f"Picked worse solutions: {n_cnt_worse}")
+    plotter.generate() # Generate and display the plots.
+    return ln_best_solution, n_best_fitness
+
 
 class Plotter:
     """
@@ -140,6 +220,7 @@ class Plotter:
         plt.title("Fitness vs Step")
         plt.xlabel(self.xlabel)
         plt.ylabel("Fitness")
+        plt.yscale('log')
         plt.grid(True)
 
         plt.tight_layout()
@@ -151,7 +232,8 @@ n_steps = 1000
 n_dimensions = 5
 n_std_start = 1.0
 
-best_solution, best_fitness = search(n_steps, n_dimensions, n_std_start)
+#best_solution, best_fitness = search(n_steps, n_dimensions, n_std_start)
+best_solution, best_fitness = search_coma_lambda(n_steps, n_dimensions, n_std_start)
 
 print(f"\nBest Solution: {best_solution}")
 print(f"Best Fitness: {best_fitness}")
