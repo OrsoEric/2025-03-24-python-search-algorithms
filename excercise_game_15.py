@@ -12,7 +12,9 @@ state
 import logging
 import random
 import pygame
-from typing import List, Tuple
+from typing import List, Tuple, Deque
+
+from collections import deque
 
 class Cl_grid:
     def __init__(self, i_n_size: int = 2):
@@ -47,24 +49,24 @@ class Cl_grid:
             raise ValueError("Invalid saved state: does not match grid size")
         self.lln_board = [row[:] for row in i_lln_saved_state]
 
-    def compute_distance(self, saved_state):
+    @staticmethod
+    def compute_distance(i_lln_lhs : List[List[int]], i_lln_rhs : List[List[int]] ):
         # Validate the saved state
-        if len(saved_state) != self.n_size or any(len(row) != self.n_size for row in saved_state):
-            raise ValueError("Invalid saved state: does not match grid size")
+        n_size = len(i_lln_lhs) 
 
         # Create a new grid to hold Manhattan distances
-        distance_grid = [[0 for _ in range(self.n_size)] for _ in range(self.n_size)]
+        distance_grid = [[0 for _ in range(n_size)] for _ in range(n_size)]
 
         # Compute the Manhattan distance for each tile
-        for r in range(self.n_size):
-            for c in range(self.n_size):
-                value = self.lln_board[r][c]
+        for r in range(n_size):
+            for c in range(n_size):
+                value = i_lln_rhs[r][c]
                 if value == 0:
                     continue  # Skip the void tile
                 # Find the correct position of the current value in the saved state
-                for target_r in range(self.n_size):
-                    for target_c in range(self.n_size):
-                        if saved_state[target_r][target_c] == value:
+                for target_r in range(n_size):
+                    for target_c in range(n_size):
+                        if i_lln_lhs[target_r][target_c] == value:
                             # Calculate the Manhattan distance
                             distance = abs(r - target_r) + abs(c - target_c)
                             distance_grid[r][c] = distance
@@ -105,7 +107,7 @@ class Cl_board(Cl_grid):
         tile_size = (400 - margin * (self.n_size + 1)) // self.n_size
 
         #compute distance of tiles to starting grid
-        lln_distance = self.compute_distance( self.lln_starting_configuration )
+        lln_distance = Cl_grid.compute_distance( lln_solved_state, self.lln_starting_configuration )
 
         #Compute max distance
         #THIS IS BUGGED it takes the max of first element. maximum unfathomable
@@ -169,6 +171,8 @@ class Solver:
         #save solved configuration
         self.lln_solved : List[List[int]] = i_cl_board.save()
 
+        self.n_cnt_list_action = 0
+
         return    
         
     def list_actions(self, i_lln_saved_state: List[List[int]]):
@@ -177,6 +181,10 @@ class Solver:
         Actions involve swapping the void with its neighboring tiles.
         Actions are represented as tuples: (row_void, col_void, row_target, col_target).
         """
+
+        #accumulate call
+        self.n_cnt_list_action += 1
+
         n_size = len(i_lln_saved_state)
         void_position = None
 
@@ -217,9 +225,9 @@ class Solver:
         #logging.info("Reference board:")
         #Cl_grid.log( self.lln_solved )
 
-        lln_distance = self.cl_board.compute_distance( i_lln_saved_state )
-        logging.info("evaluate_score distance:")
-        Cl_grid.log(lln_distance)
+        lln_distance = Cl_grid.compute_distance( self.lln_solved, i_lln_saved_state )
+        #logging.info("evaluate_score distance:")
+        #Cl_grid.log(lln_distance)
         n_score = 0
         for ln_distance in lln_distance:
             for n_distance in ln_distance:
@@ -228,56 +236,105 @@ class Solver:
         #SUM is bugged too... I expected sum of sum fould sum an array...
         #n_score = sum(sum(lln_distance))
         return n_score
-
-    def execute_action( self, i_lln_state : List[List[int]], i_tn_action : Tuple[int] ) -> bool:
+    
+    def execute_action(self, i_lln_state: List[List[int]], i_tn_action: Tuple[int]) -> Tuple[bool, List[List[int]]]:
         """
-        from a given state, execute an action
+        From a given state, execute an action and return a new state vector.
         """
 
-        #unpack action
+        # Unpack action
         (n_void_w, n_void_h, n_item_w, n_item_h) = i_tn_action
 
+        # Validate positions
         n_void = i_lln_state[n_void_h][n_void_w]
         if n_void != cl_board.c_n_void:
-            logging.error(f"ERR: position {i_tn_action} is not a VOID {n_void} ")
-            return True #FAIL
+            logging.error(f"ERR: position {i_tn_action} is not a VOID {n_void}")
+            return True, []  # FAIL
 
         n_item = i_lln_state[n_item_h][n_item_w]
         if n_item == cl_board.c_n_void:
-            logging.error(f"ERR: position {i_tn_action} is not an ITEM {n_item} ")
-            return True #FAIL       
+            logging.error(f"ERR: position {i_tn_action} is not an ITEM {n_item}")
+            return True, []  # FAIL
 
-        #perform the swap
-        i_lln_state[n_void_h][n_void_w] = n_item
-        i_lln_state[n_item_h][n_item_w] = n_void
+        # Create a deep copy of the input state
+        new_state = [row[:] for row in i_lln_state]
 
-        return False #OK
+        # Perform the swap in the new state vector
+        new_state[n_void_h][n_void_w] = n_item
+        new_state[n_item_h][n_item_w] = n_void
+
+        return False, new_state  # OK
 
 
-    def solve(self):
 
-        n_score = self.evaluate_score( self.lln_solved )
-        logging.info(f"Score Solved: {n_score}")
-
-        lln_shuffled = self.cl_board.save()
-        n_score = self.evaluate_score( lnn_shuffled)
-        logging.info(f"Score Shuffled: {n_score}")
-
-        # List all possible actions from the saved state
-        ltn_actions = self.list_actions(lnn_shuffled)
-        logging.info(f"Actions: {ltn_actions}")
+    def is_goal_reached(self, i_lln_saved_state: List[List[int]]) -> bool:
+        n_score = self.evaluate_score( i_lln_saved_state)
+        if (n_score == 0):
+            return True #GOAL RECHED
         
-        tn_action = ltn_actions[0]
-        self.execute_action(lnn_shuffled,tn_action)
-        logging.info(f"Execute Action: {tn_action}")
+        return False #GOAL NOT REACHED
+    
+    def solve(self):
+        """
+        
+        """
+        class St_solution:
+            lln_state: List[List[int]] = list()
+            n_score: int = -1
+            ltn_action: List[Tuple[int]] = list()
+            n_cost: int = 0
+
+            def __repr__(self):
+                board_str = "\n".join(["\t".join(map(str, row)) for row in self.lln_state])
+                actions_str = ", ".join(map(str, self.ltn_action))
+                return f"Solution(score={self.n_score}, cost={self.n_cost}, actions=[{actions_str}], board=\n{board_str}\n)"
+
+
+        lnn_shuffled = self.cl_board.save()
+        n_step_cnt: int = 0
+        logging.info("starting state:")
         Cl_grid.log(lnn_shuffled)
 
-        #for tn_action in ltn_actions:
-            
+        st_solution_current = St_solution()
+        st_solution_current.lln_state = lnn_shuffled
+        st_solution_current.n_score = self.evaluate_score(lnn_shuffled)
 
-        
+        logging.info(f"Currnet solution\n{st_solution_current}")
 
-        
+        queue: Deque[St_solution] = deque()
+        queue.append(st_solution_current)
+        visited_states = {tuple(map(tuple, lnn_shuffled))}
+
+        n_step_cnt = 0
+
+        while n_step_cnt < 1000 and queue:
+            n_step_cnt += 1
+            current_solution = queue.popleft()
+            if self.is_goal_reached(current_solution.lln_state):
+                logging.info("Solution found!")
+                logging.info(f"Steps: {len(current_solution.ltn_action)}")
+                logging.info(f"Actions: {current_solution.ltn_action}")
+                return
+
+            ltn_actions = self.list_actions(current_solution.lln_state)
+            logging.debug(f"Actions: {ltn_actions}")
+            for tn_action in ltn_actions:
+                x_error, lln_state_next = self.execute_action(current_solution.lln_state, tn_action)
+                if not x_error:
+                    new_state_tuple = tuple(map(tuple, lln_state_next))
+                    if new_state_tuple not in visited_states:
+                        visited_states.add(new_state_tuple)
+                        new_solution = St_solution()
+                        new_solution.lln_state = lln_state_next
+                        new_solution.n_score = self.evaluate_score(lln_state_next)
+                        new_solution.ltn_action = current_solution.ltn_action + [tn_action]
+                        new_solution.n_cost = current_solution.n_cost + 1
+                        logging.debug(f"Push solutioN: {new_solution}")
+                        queue.append(new_solution)
+
+                        
+
+        logging.info("No solution found.")
         return
 
 
@@ -285,7 +342,7 @@ if __name__ == "__main__":
     # Setup logging
     logging.basicConfig(
         filename="debug.log",
-        level=logging.INFO,
+        level=logging.DEBUG,
         format='[%(asctime)s] %(levelname)s %(module)s:%(lineno)d > %(message)s ',
         filemode='w'
     )
@@ -293,7 +350,7 @@ if __name__ == "__main__":
     logging.info("Begin")
 
     # Create a Board instance
-    cl_board = Cl_board(5)  # You can specify different grid sizes here
+    cl_board = Cl_board(2)  # You can specify different grid sizes here
 
     # Initialize the Solver
     cl_solver = Solver( cl_board )
@@ -312,13 +369,6 @@ if __name__ == "__main__":
     # Log the shuffled board configuration
     logging.info(f"Shuffled Board:\n{repr(cl_board)}")
 
-    # Compute Manhattan distance to the saved state
-    distance_grid = cl_board.compute_distance(lln_solved_state)
-    print("Manhattan Distance Grid:")
-
-    for row in distance_grid:
-        print(row)
-
     if (False):
         cl_board.load( lln_solved_state )
         logging.info(f"Restore Backup:\n{repr(cl_board)}")
@@ -326,7 +376,7 @@ if __name__ == "__main__":
 
     cl_solver.solve()
 
-
+    cl_board.load(lnn_shuffled)
     # Game loop
     while cl_board.running:
         for event in pygame.event.get():
