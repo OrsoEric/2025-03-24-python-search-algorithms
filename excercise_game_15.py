@@ -8,11 +8,11 @@ state
 
 
 """
+
 import logging
 import random
-import pygame  # Import pygame for graphical rendering
+import pygame
 
-import random
 
 class Grid:
     def __init__(self, i_n_size: int = 2):
@@ -28,7 +28,7 @@ class Grid:
         # Return a string representation of the grid
         board_str = "\n".join(["\t".join(map(str, row)) for row in self.lln_board])
         return f"Grid({self.n_size}x{self.n_size}):\n{board_str}"
-    
+
     def shuffle(self):
         # Flatten the grid into a list
         flat_board = [tile for row in self.lln_board for tile in row]
@@ -47,12 +47,38 @@ class Grid:
             raise ValueError("Invalid saved state: does not match grid size")
         self.lln_board = [row[:] for row in saved_state]
 
+    def compute_distance(self, saved_state):
+        # Validate the saved state
+        if len(saved_state) != self.n_size or any(len(row) != self.n_size for row in saved_state):
+            raise ValueError("Invalid saved state: does not match grid size")
+
+        # Create a new grid to hold Manhattan distances
+        distance_grid = [[0 for _ in range(self.n_size)] for _ in range(self.n_size)]
+
+        # Compute the Manhattan distance for each tile
+        for r in range(self.n_size):
+            for c in range(self.n_size):
+                value = self.lln_board[r][c]
+                if value == 0:
+                    continue  # Skip the void tile
+                # Find the correct position of the current value in the saved state
+                for target_r in range(self.n_size):
+                    for target_c in range(self.n_size):
+                        if saved_state[target_r][target_c] == value:
+                            # Calculate the Manhattan distance
+                            distance = abs(r - target_r) + abs(c - target_c)
+                            distance_grid[r][c] = distance
+                            break
+
+        return distance_grid
+
 
 class Board(Grid):
     def __init__(self, i_n_size: int = 2):
         # Initialize the parent class (Grid)
         super().__init__(i_n_size)
-    
+        self.lln_starting_configuration = self.save()
+
     def start_window(self):
         # Initialize pygame
         pygame.init()
@@ -70,6 +96,11 @@ class Board(Grid):
         margin = 3
         tile_size = (400 - margin * (self.n_size + 1)) // self.n_size
 
+        #compute distance of tiles to starting grid
+        lln_distance = self.compute_distance( self.lln_starting_configuration )
+
+        #Compute max distance
+        n_max_distance = max(max(lln_distance))
         # Draw the tiles
         for r in range(self.n_size):
             for c in range(self.n_size):
@@ -79,9 +110,19 @@ class Board(Grid):
                     x = c * (tile_size + margin) + margin
                     y = r * (tile_size + margin) + margin
 
+                    # Determine the color based on Manhattan distance
+                    n_distance = lln_distance[r][c]
+                    if n_distance == 0:  # Correct position
+                        color = (0, 0, 255)  # Blue
+                    elif n_max_distance <= 1:
+                        color = (0, 255, 0)  # Green
+                    else:
+                        n_green = 255 * (n_max_distance-n_distance)/(n_max_distance-1)
+                        color = (255-n_green, n_green, 0)  # Green
+
                     # Draw a rectangle for the tile
                     pygame.draw.rect(
-                        self.screen, (0, 0, 255),  # Blue color
+                        self.screen, color,
                         (x, y, tile_size, tile_size)  # Position and size with margin
                     )
                     # Render the tile number
@@ -92,6 +133,7 @@ class Board(Grid):
         # Update the display
         pygame.display.flip()
 
+
 if __name__ == "__main__":
     # Setup logging
     logging.basicConfig(
@@ -100,7 +142,7 @@ if __name__ == "__main__":
         format='[%(asctime)s] %(levelname)s %(module)s:%(lineno)d > %(message)s ',
         filemode='w'
     )
-    
+
     logging.info("Begin")
 
     # Create a Board instance
@@ -116,19 +158,25 @@ if __name__ == "__main__":
 
     # Shuffle the board
     board.shuffle()
-
     # Log the shuffled board configuration
     logging.info(f"Shuffled Board:\n{repr(board)}")
 
-    board.load( backup )
-    logging.info(f"Restore:\n{repr(board)}")
+    # Compute Manhattan distance to the saved state
+    distance_grid = board.compute_distance(backup)
+    print("Manhattan Distance Grid:")
+    for row in distance_grid:
+        print(row)
+
+    if (False):
+        board.load( backup )
+        logging.info(f"Restore Backup:\n{repr(board)}")
 
     # Game loop
     while board.running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:  # Exit when the window is closed
                 board.running = False
-        
+
         # Update the game state visually
         board.update()
 
