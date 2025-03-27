@@ -1,8 +1,20 @@
-[2025-03-27 12:15:29,610] INFO problem_set_coverage_path:94 > Begin 
-[2025-03-27 12:15:29,610] INFO problem_set_coverage_path:23 > Generate problem 
-[2025-03-27 12:15:29,610] INFO problem_set_coverage_path:38 > Items: [ True  True] | Cost: 8323 
-[2025-03-27 12:15:29,610] INFO problem_set_coverage_path:38 > Items: [False False] | Cost: 5579 
-[2025-03-27 12:15:29,610] INFO problem_set_coverage_path:38 > Items: [ True False] | Cost: 4427 
-[2025-03-27 12:15:29,610] INFO problem_set_coverage_path:44 > construct the solver 
-[2025-03-27 12:15:29,610] INFO problem_set_coverage_path:58 > [Items: [ True  True] | Cost: 8323, Items: [False False] | Cost: 5579, Items: [ True False] | Cost: 4427] 
-[2025-03-27 12:15:29,610] INFO problem_set_coverage_path:58 > [Items: [False False] | Cost: 5579, Items: [ True False] | Cost: 4427] 
+[2025-03-27 14:45:44,895] INFO excercise_game_15:104 > Begin 
+[2025-03-27 14:45:45,017] INFO excercise_game_15:115 > Initial Board:
+Grid(4x4):
+1	2	3	4
+5	6	7	8
+9	10	11	12
+13	14	15	0 
+[2025-03-27 14:45:45,017] INFO excercise_game_15:121 > Shuffled Board:
+Grid(4x4):
+2	3	1	9
+5	15	7	10
+6	13	11	0
+4	14	12	8 
+[2025-03-27 14:45:45,017] INFO excercise_game_15:124 > Restore:
+Grid(4x4):
+1	2	3	4
+5	6	7	8
+9	10	11	12
+13	14	15	0 
+[2025-03-27 14:45:47,007] INFO excercise_game_15:137 > End 
