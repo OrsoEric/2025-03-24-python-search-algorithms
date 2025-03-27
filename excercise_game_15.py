@@ -12,17 +12,17 @@ state
 import logging
 import random
 import pygame
-from typing import List
+from typing import List, Tuple
 
 class Cl_grid:
     def __init__(self, i_n_size: int = 2):
-        c_n_void = 0
+        self.c_n_void = 0
         # Size of the grid
         self.n_size = i_n_size
         # Grid configuration (initially ordered)
         self.lln_board = [[r * i_n_size + c + 1 for c in range(i_n_size)] for r in range(i_n_size)]
         # Designate the last cell as void (empty space) by convention
-        self.lln_board[-1][-1] = c_n_void
+        self.lln_board[-1][-1] = self.c_n_void
 
     def __repr__(self):
         # Return a string representation of the grid
@@ -214,6 +214,9 @@ class Solver:
         When the board is solved, score is zero
         """
 
+        #logging.info("Reference board:")
+        #Cl_grid.log( self.lln_solved )
+
         lln_distance = self.cl_board.compute_distance( i_lln_saved_state )
         logging.info("evaluate_score distance:")
         Cl_grid.log(lln_distance)
@@ -226,6 +229,56 @@ class Solver:
         #n_score = sum(sum(lln_distance))
         return n_score
 
+    def execute_action( self, i_lln_state : List[List[int]], i_tn_action : Tuple[int] ) -> bool:
+        """
+        from a given state, execute an action
+        """
+
+        #unpack action
+        (n_void_w, n_void_h, n_item_w, n_item_h) = i_tn_action
+
+        n_void = i_lln_state[n_void_h][n_void_w]
+        if n_void != cl_board.c_n_void:
+            logging.error(f"ERR: position {i_tn_action} is not a VOID {n_void} ")
+            return True #FAIL
+
+        n_item = i_lln_state[n_item_h][n_item_w]
+        if n_item == cl_board.c_n_void:
+            logging.error(f"ERR: position {i_tn_action} is not an ITEM {n_item} ")
+            return True #FAIL       
+
+        #perform the swap
+        i_lln_state[n_void_h][n_void_w] = n_item
+        i_lln_state[n_item_h][n_item_w] = n_void
+
+        return False #OK
+
+
+    def solve(self):
+
+        n_score = self.evaluate_score( self.lln_solved )
+        logging.info(f"Score Solved: {n_score}")
+
+        lln_shuffled = self.cl_board.save()
+        n_score = self.evaluate_score( lnn_shuffled)
+        logging.info(f"Score Shuffled: {n_score}")
+
+        # List all possible actions from the saved state
+        ltn_actions = self.list_actions(lnn_shuffled)
+        logging.info(f"Actions: {ltn_actions}")
+        
+        tn_action = ltn_actions[0]
+        self.execute_action(lnn_shuffled,tn_action)
+        logging.info(f"Execute Action: {tn_action}")
+        Cl_grid.log(lnn_shuffled)
+
+        #for tn_action in ltn_actions:
+            
+
+        
+
+        
+        return
 
 
 if __name__ == "__main__":
@@ -270,6 +323,10 @@ if __name__ == "__main__":
         cl_board.load( lln_solved_state )
         logging.info(f"Restore Backup:\n{repr(cl_board)}")
 
+
+    cl_solver.solve()
+
+
     # Game loop
     while cl_board.running:
         for event in pygame.event.get():
@@ -283,15 +340,7 @@ if __name__ == "__main__":
     
     
 
-    # List all possible actions from the saved state
-    actions = cl_solver.list_actions(lnn_shuffled)
-    logging.info(f"Actions: {actions}")
 
-    n_score = cl_solver.evaluate_score( lln_solved_state)
-    logging.info(f"Score Solved: {n_score}")
-
-    n_score = cl_solver.evaluate_score( lnn_shuffled)
-    logging.info(f"Score Shuffled: {n_score}")
 
 
 

@@ -1,33 +1,40 @@
-[2025-03-27 15:50:40,340] INFO excercise_game_15:240 > Begin 
-[2025-03-27 15:50:40,469] INFO excercise_game_15:254 > Initial Board:
+[2025-03-27 16:09:05,043] INFO excercise_game_15:293 > Begin 
+[2025-03-27 16:09:05,164] INFO excercise_game_15:307 > Initial Board:
 Grid(5x5):
 1	2	3	4	5
 6	7	8	9	10
 11	12	13	14	15
 16	17	18	19	20
 21	22	23	24	0 
-[2025-03-27 15:50:40,469] INFO excercise_game_15:260 > Shuffled Board:
+[2025-03-27 16:09:05,164] INFO excercise_game_15:313 > Shuffled Board:
 Grid(5x5):
-18	20	23	17	15
-19	4	7	6	9
-5	0	16	11	21
-1	12	22	10	14
-3	13	8	2	24 
-[2025-03-27 15:50:42,519] INFO excercise_game_15:288 > Actions: [(1, 2, 1, 1), (1, 2, 1, 3), (1, 2, 0, 2), (1, 2, 2, 2)] 
-[2025-03-27 15:50:42,519] INFO excercise_game_15:218 > evaluate_score distance: 
-[2025-03-27 15:50:42,519] INFO excercise_game_15:80 > Saved State: 
-[2025-03-27 15:50:42,519] INFO excercise_game_15:82 > 	5	6	4	5	2 
-[2025-03-27 15:50:42,519] INFO excercise_game_15:82 > 	5	3	1	3	1 
-[2025-03-27 15:50:42,519] INFO excercise_game_15:82 > 	6	0	3	3	6 
-[2025-03-27 15:50:42,519] INFO excercise_game_15:82 > 	3	1	2	3	2 
-[2025-03-27 15:50:42,520] INFO excercise_game_15:82 > 	6	3	3	6	1 
-[2025-03-27 15:50:42,520] INFO excercise_game_15:291 > Score Solved: 83 
-[2025-03-27 15:50:42,520] INFO excercise_game_15:218 > evaluate_score distance: 
-[2025-03-27 15:50:42,520] INFO excercise_game_15:80 > Saved State: 
-[2025-03-27 15:50:42,520] INFO excercise_game_15:82 > 	0	0	0	0	0 
-[2025-03-27 15:50:42,520] INFO excercise_game_15:82 > 	0	0	0	0	0 
-[2025-03-27 15:50:42,520] INFO excercise_game_15:82 > 	0	0	0	0	0 
-[2025-03-27 15:50:42,520] INFO excercise_game_15:82 > 	0	0	0	0	0 
-[2025-03-27 15:50:42,520] INFO excercise_game_15:82 > 	0	0	0	0	0 
-[2025-03-27 15:50:42,520] INFO excercise_game_15:294 > Score Shuffled: 0 
-[2025-03-27 15:50:42,567] INFO excercise_game_15:300 > End 
+21	14	3	1	9
+22	0	4	20	24
+12	11	19	23	18
+5	16	15	13	17
+6	7	2	8	10 
+[2025-03-27 16:09:05,165] INFO excercise_game_15:221 > evaluate_score distance: 
+[2025-03-27 16:09:05,165] INFO excercise_game_15:80 > Saved State: 
+[2025-03-27 16:09:05,165] INFO excercise_game_15:82 > 	4	4	0	3	2 
+[2025-03-27 16:09:05,165] INFO excercise_game_15:82 > 	4	0	2	3	4 
+[2025-03-27 16:09:05,165] INFO excercise_game_15:82 > 	1	1	2	3	3 
+[2025-03-27 16:09:05,165] INFO excercise_game_15:82 > 	7	1	3	2	3 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:82 > 	3	3	5	4	3 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:260 > Score Solved: 70 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:221 > evaluate_score distance: 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:80 > Saved State: 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:82 > 	0	0	0	0	0 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:82 > 	0	0	0	0	0 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:82 > 	0	0	0	0	0 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:82 > 	0	0	0	0	0 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:82 > 	0	0	0	0	0 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:264 > Score Shuffled: 0 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:268 > Actions: [(1, 1, 1, 0), (1, 1, 1, 2), (1, 1, 0, 1), (1, 1, 2, 1)] 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:272 > Execute Action: (1, 1, 1, 0) 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:80 > Saved State: 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:82 > 	21	0	3	1	9 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:82 > 	22	14	4	20	24 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:82 > 	12	11	19	23	18 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:82 > 	5	16	15	13	17 
+[2025-03-27 16:09:05,166] INFO excercise_game_15:82 > 	6	7	2	8	10 
+[2025-03-27 16:09:07,082] INFO excercise_game_15:349 > End 
