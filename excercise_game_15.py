@@ -14,7 +14,7 @@ import random
 import pygame
 from typing import List
 
-class Grid:
+class Cl_grid:
     def __init__(self, i_n_size: int = 2):
         c_n_void = 0
         # Size of the grid
@@ -81,7 +81,7 @@ class Grid:
         for row in i_lln_saved_state:
             logging.info("\t" + "\t".join(map(str, row)))
 
-class Board(Grid):
+class Cl_board(Cl_grid):
     def __init__(self, i_n_size: int = 2):
         # Initialize the parent class (Grid)
         super().__init__(i_n_size)
@@ -164,7 +164,11 @@ class Board(Grid):
         pygame.display.flip()
 
 class Solver:
-    def __init__(self):
+    def __init__(self, i_cl_board : Cl_board):
+        self.cl_board : Cl_board = i_cl_board
+        #save solved configuration
+        self.lln_solved : List[List[int]] = i_cl_board.save()
+
         return    
         
     def list_actions(self, i_lln_saved_state: List[List[int]]):
@@ -202,6 +206,26 @@ class Solver:
             ltn_actions.append((n_void_w, n_void_h, n_void_w + 1, n_void_h))
 
         return ltn_actions
+    
+    def evaluate_score(self, i_lln_saved_state: List[List[int]]) -> int:
+        """
+        Given a state, evaluate its score
+        I take the total sum of every distance
+        When the board is solved, score is zero
+        """
+
+        lln_distance = self.cl_board.compute_distance( i_lln_saved_state )
+        logging.info("evaluate_score distance:")
+        Cl_grid.log(lln_distance)
+        n_score = 0
+        for ln_distance in lln_distance:
+            for n_distance in ln_distance:
+                n_score += n_distance
+
+        #SUM is bugged too... I expected sum of sum fould sum an array...
+        #n_score = sum(sum(lln_distance))
+        return n_score
+
 
 
 if __name__ == "__main__":
@@ -216,49 +240,58 @@ if __name__ == "__main__":
     logging.info("Begin")
 
     # Create a Board instance
-    board = Board(5)  # You can specify different grid sizes here
+    cl_board = Cl_board(5)  # You can specify different grid sizes here
 
-    backup = board.save()
+    # Initialize the Solver
+    cl_solver = Solver( cl_board )
+
+    lln_solved_state = cl_board.save()
 
     # Initialize the pygame window
-    board.start_window()
+    cl_board.start_window()
 
     # Log the initial board configuration
-    logging.info(f"Initial Board:\n{repr(board)}")
+    logging.info(f"Initial Board:\n{repr(cl_board)}")
 
     # Shuffle the board
-    board.shuffle()
-    lnn_shuffled = board.save()
+    cl_board.shuffle()
+    lnn_shuffled = cl_board.save()
     # Log the shuffled board configuration
-    logging.info(f"Shuffled Board:\n{repr(board)}")
+    logging.info(f"Shuffled Board:\n{repr(cl_board)}")
 
     # Compute Manhattan distance to the saved state
-    distance_grid = board.compute_distance(backup)
+    distance_grid = cl_board.compute_distance(lln_solved_state)
     print("Manhattan Distance Grid:")
 
     for row in distance_grid:
         print(row)
 
     if (False):
-        board.load( backup )
-        logging.info(f"Restore Backup:\n{repr(board)}")
+        cl_board.load( lln_solved_state )
+        logging.info(f"Restore Backup:\n{repr(cl_board)}")
 
     # Game loop
-    while board.running:
+    while cl_board.running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:  # Exit when the window is closed
-                board.running = False
+                cl_board.running = False
 
         # Update the game state visually
-        board.update()
+        cl_board.update()
 
 
-    # Initialize the Solver
-    solver = Solver()
+    
+    
 
     # List all possible actions from the saved state
-    actions = solver.list_actions(lnn_shuffled)
+    actions = cl_solver.list_actions(lnn_shuffled)
     logging.info(f"Actions: {actions}")
+
+    n_score = cl_solver.evaluate_score( lln_solved_state)
+    logging.info(f"Score Solved: {n_score}")
+
+    n_score = cl_solver.evaluate_score( lnn_shuffled)
+    logging.info(f"Score Shuffled: {n_score}")
 
 
 
