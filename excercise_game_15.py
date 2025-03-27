@@ -41,11 +41,11 @@ class Grid:
         # Return the current grid as a list of lists (for saving)
         return [row[:] for row in self.lln_board]
 
-    def load(self, saved_state):
+    def load(self, i_lln_saved_state):
         # Load the grid from a saved state (list of lists)
-        if len(saved_state) != self.n_size or any(len(row) != self.n_size for row in saved_state):
+        if len(i_lln_saved_state) != self.n_size or any(len(row) != self.n_size for row in i_lln_saved_state):
             raise ValueError("Invalid saved state: does not match grid size")
-        self.lln_board = [row[:] for row in saved_state]
+        self.lln_board = [row[:] for row in i_lln_saved_state]
 
     def compute_distance(self, saved_state):
         # Validate the saved state
@@ -71,6 +71,8 @@ class Grid:
                             break
 
         return distance_grid
+
+
 
 
 class Board(Grid):
@@ -100,38 +102,74 @@ class Board(Grid):
         lln_distance = self.compute_distance( self.lln_starting_configuration )
 
         #Compute max distance
-        n_max_distance = max(max(lln_distance))
+        #THIS IS BUGGED it takes the max of first element. maximum unfathomable
+        #n_max_distance = max(max(lln_distance))
+        n_max_distance = 0
+        for r in range(self.n_size):
+            for c in range(self.n_size):
+                n_value = lln_distance[r][c]
+                if n_value > n_max_distance:
+                    n_max_distance = n_value
+
         # Draw the tiles
         for r in range(self.n_size):
             for c in range(self.n_size):
-                value = self.lln_board[r][c]
-                if value != 0:  # Skip the void tile
+                n_value = self.lln_board[r][c]
+                if n_value != 0:  # Skip the void tile
                     # Position with spacing applied
                     x = c * (tile_size + margin) + margin
                     y = r * (tile_size + margin) + margin
 
+                    ln_color = (0, 0, 0)  # BLACK
                     # Determine the color based on Manhattan distance
                     n_distance = lln_distance[r][c]
-                    if n_distance == 0:  # Correct position
-                        color = (0, 0, 255)  # Blue
+                    if n_distance > n_max_distance:
+                        print(f"ERR: Max {n_max_distance} | dist: {n_distance}")
+                        ln_color = (0, 0, 0)  # BLACK
+                    elif n_distance == 0:  # Correct position
+                        ln_color = (0, 0, 255)  # Blue
                     elif n_max_distance <= 1:
-                        color = (0, 255, 0)  # Green
+                        ln_color = (0, 255, 0)  # Green
                     else:
                         n_green = 255 * (n_max_distance-n_distance)/(n_max_distance-1)
-                        color = (255-n_green, n_green, 0)  # Green
+
+                        if n_green < 0:
+                            print(f"ERR: {n_green} | Max {n_max_distance} | dist: {n_distance}")
+                            n_green = 0
+                            
+                        elif n_green > 255:
+                            print(f"ERR: {n_green} | Max {n_max_distance} | dist: {n_distance}")
+                            n_green = 255
+
+                        ln_color = (255-n_green, n_green, 0)  # Green
 
                     # Draw a rectangle for the tile
                     pygame.draw.rect(
-                        self.screen, color,
+                        self.screen,
+                        ln_color,
                         (x, y, tile_size, tile_size)  # Position and size with margin
                     )
                     # Render the tile number
-                    text = self.font.render(str(value), True, (255, 255, 255))  # White text
+                    text = self.font.render(str(n_value), True, (255, 255, 255))  # White text
                     text_rect = text.get_rect(center=(x + tile_size // 2, y + tile_size // 2))
                     self.screen.blit(text, text_rect)  # Draw the text on the screen
 
         # Update the display
         pygame.display.flip()
+
+class Solver:
+    def __init__(self):
+        return    
+        
+    
+    def list_actions(self):
+        """
+        From a given state s
+        List all actions possible from this state
+        For this game, look at the VOID
+        generate a swap between the void and every surrounding position
+        """
+
 
 
 if __name__ == "__main__":
@@ -146,7 +184,7 @@ if __name__ == "__main__":
     logging.info("Begin")
 
     # Create a Board instance
-    board = Board(4)  # You can specify different grid sizes here
+    board = Board(5)  # You can specify different grid sizes here
 
     backup = board.save()
 
@@ -164,6 +202,7 @@ if __name__ == "__main__":
     # Compute Manhattan distance to the saved state
     distance_grid = board.compute_distance(backup)
     print("Manhattan Distance Grid:")
+
     for row in distance_grid:
         print(row)
 
