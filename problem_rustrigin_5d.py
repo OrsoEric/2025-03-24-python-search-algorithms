@@ -4,6 +4,27 @@ import logging
 
 from typing import List, Tuple
 
+#implement 1/5 P
+#use a IRF infinite reaction filter to detect the percentage of better solution
+    
+
+class Cl_infinite_reaction_filter:
+    def __init__(self, i_n_irf : float = 0.2):
+        #parameter of the IRF infinite reaction filter. It's a low pass filter
+        #0.0 no memory, only new sample count
+        #1.0 infinite memory, only old samples count
+        self.c_n_irf_parameter : float = i_n_irf
+        #status var. I'ts like a low pass filter
+        self.n_state : float = 0.0
+        return
+
+    def sample(self, i_n_value : float) -> float:
+        self.n_state = self.n_state * self.c_n_irf_parameter +i_n_value *(1 -self.c_n_irf_parameter)
+        return self.n_state
+    
+    def get(self) -> float:
+        return self.n_state
+
 
 class Cl_plotter:
     """
@@ -25,9 +46,17 @@ class Cl_plotter:
         self.ln_point = []
         self.ln_error = []
         self.ln_tweak = []
+        self.ln_rate : List[float] = list()
         
 
-    def add_solution(self, step: int, i_ln_point: List[float], i_n_error: float, i_n_tweak_strenght : float ):
+    def add_solution(
+        self,
+        step: int,
+        i_ln_point: List[float],
+        i_n_error: float,
+        i_n_tweak_strenght : float,
+        i_n_rate : float
+    ):
         """
         Adds a solution point to the plotter's data.
 
@@ -41,6 +70,10 @@ class Cl_plotter:
         self.ln_point.append(i_ln_point)
         self.ln_error.append(abs(i_n_error))
         self.ln_tweak.append(abs(i_n_tweak_strenght))
+        #this is the rate of better solution.
+        # 1 means everything is better and fitness keeps going up
+        # 0 means every step is worse and fitness keeps going down
+        self.ln_rate.append(abs(i_n_rate))
 
         return
 
@@ -64,6 +97,7 @@ class Cl_plotter:
         plt.legend()
 
         plt.subplot(1, 2, 2)
+        plt.scatter(self.ln_steps, self.ln_rate, marker='.', color='black', label='Improve Rate')
         plt.scatter(self.ln_steps, self.ln_error, marker='x', color='red', label='Error')
         plt.scatter(self.ln_steps, self.ln_tweak, marker='.', color='green', label='Tweak')
         plt.title("Error vs Step")
@@ -136,7 +170,18 @@ def solver( i_n_dimensions : int = 2, i_n_step_max : int = 100 ):
     #WORSE COUNTER
     n_cnt_worse = 0
 
+    #BETTER/WORSE
+    #percentage of new solutions that improved in fitness compared to previous solution
+
+    cl_rate : Cl_infinite_reaction_filter = Cl_infinite_reaction_filter( 0.001 )
+
+    #----------------------------------------------------------------------
+    #   EURISTIC SEARCH
+    #----------------------------------------------------------------------
+
     for n_step in range(i_n_step_max):
+
+        n_current_fitness : float = n_best_fitness
 
         #----------------------------------------------------------------------
         #   RESTART
@@ -147,6 +192,7 @@ def solver( i_n_dimensions : int = 2, i_n_step_max : int = 100 ):
             ln_best_solution = random_solution( n_dimensions, n_std_init )
             n_best_fitness = fitness(ln_best_solution)
             n_cnt_restart += 1
+
         elif numpy.random.rand() < n_restart_best:
             ln_best_solution = ln_best_solution_backup
             n_best_fitness = n_best_fitness_backup
@@ -183,20 +229,34 @@ def solver( i_n_dimensions : int = 2, i_n_step_max : int = 100 ):
                     lm_best_solution_temp = ln_candidate
                     n_best_fitness_temp = n_new_fitness
 
-        if (n_best_fitness_temp < n_best_fitness):
+        #----------------------------------------------------------------------
+        #   BETTER/WORSE SOLUTION
+        #----------------------------------------------------------------------
+
+        #If I recorded an improvement
+        if (n_best_fitness_temp > n_current_fitness):
+            #local improvement
+            cl_rate.sample(1)
+        #if I recorded a degradation
+        else:
+            cl_rate.sample(0)
             n_cnt_worse += 1
 
+        #new solution becomes current solution
         ln_best_solution = lm_best_solution_temp
         n_best_fitness = n_best_fitness_temp
 
         #SAVE BACKUP
         #if the current best is better than the backed up best
         if abs(n_target_fitness - n_best_fitness) < abs(n_target_fitness - n_best_fitness_backup):
+            #global improvement
             ln_best_solution_backup = ln_best_solution
             n_best_fitness_backup = n_best_fitness
             n_cnt_backup_save += 1
 
-        cl_plotter.add_solution(n_step, ln_best_solution, n_error, n_std_tweak) # Add the solution to the plotter.
+        n_irf_rate = cl_rate.get()
+
+        cl_plotter.add_solution(n_step, ln_best_solution, n_error, n_std_tweak, n_irf_rate) # Add the solution to the plotter.
 
         logging.info(f"Step: {n_step} | Fitness: {n_best_fitness:.3f} | Solution: {ln_best_solution}")
 
@@ -207,8 +267,6 @@ def solver( i_n_dimensions : int = 2, i_n_step_max : int = 100 ):
 
     cl_plotter.generate() # Generate and display the plots.
     return ln_best_solution, n_best_fitness
-
-
 
 if __name__ == "__main__":
     logging.basicConfig(
