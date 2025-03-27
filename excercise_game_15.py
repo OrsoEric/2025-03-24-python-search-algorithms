@@ -12,7 +12,7 @@ state
 import logging
 import random
 import pygame
-
+from typing import List
 
 class Grid:
     def __init__(self, i_n_size: int = 2):
@@ -41,7 +41,7 @@ class Grid:
         # Return the current grid as a list of lists (for saving)
         return [row[:] for row in self.lln_board]
 
-    def load(self, i_lln_saved_state):
+    def load(self, i_lln_saved_state : List[List[int]] ):
         # Load the grid from a saved state (list of lists)
         if len(i_lln_saved_state) != self.n_size or any(len(row) != self.n_size for row in i_lln_saved_state):
             raise ValueError("Invalid saved state: does not match grid size")
@@ -72,8 +72,14 @@ class Grid:
 
         return distance_grid
 
-
-
+    @staticmethod
+    def log(i_lln_saved_state: List[List[int]]):
+        """
+        Log the given saved state into the logger.
+        """
+        logging.info("Saved State:")
+        for row in i_lln_saved_state:
+            logging.info("\t" + "\t".join(map(str, row)))
 
 class Board(Grid):
     def __init__(self, i_n_size: int = 2):
@@ -161,15 +167,41 @@ class Solver:
     def __init__(self):
         return    
         
-    
-    def list_actions(self):
+    def list_actions(self, i_lln_saved_state: List[List[int]]):
         """
-        From a given state s
-        List all actions possible from this state
-        For this game, look at the VOID
-        generate a swap between the void and every surrounding position
+        From a given state, list all possible actions for the void.
+        Actions involve swapping the void with its neighboring tiles.
+        Actions are represented as tuples: (row_void, col_void, row_target, col_target).
         """
+        n_size = len(i_lln_saved_state)
+        void_position = None
 
+        # Locate the void position (value 0)
+        for r in range(n_size):
+            for c in range(n_size):
+                if i_lln_saved_state[r][c] == 0:
+                    void_position = (r, c)
+                    break
+            if void_position:
+                break
+
+        if not void_position:
+            raise ValueError("No void (0) found in the given state.")
+
+        n_void_h, n_void_w = void_position
+        ltn_actions = []
+
+        # List all possible moves by checking bounds
+        if n_void_h > 0:  # Move up
+            ltn_actions.append((n_void_w, n_void_h, n_void_w, n_void_h - 1))
+        if n_void_h < n_size - 1:  # Move down
+            ltn_actions.append((n_void_w, n_void_h, n_void_w, n_void_h + 1))
+        if n_void_w > 0:  # Move left
+            ltn_actions.append((n_void_w, n_void_h, n_void_w - 1, n_void_h))
+        if n_void_w < n_size - 1:  # Move right
+            ltn_actions.append((n_void_w, n_void_h, n_void_w + 1, n_void_h))
+
+        return ltn_actions
 
 
 if __name__ == "__main__":
@@ -196,6 +228,7 @@ if __name__ == "__main__":
 
     # Shuffle the board
     board.shuffle()
+    lnn_shuffled = board.save()
     # Log the shuffled board configuration
     logging.info(f"Shuffled Board:\n{repr(board)}")
 
@@ -218,6 +251,16 @@ if __name__ == "__main__":
 
         # Update the game state visually
         board.update()
+
+
+    # Initialize the Solver
+    solver = Solver()
+
+    # List all possible actions from the saved state
+    actions = solver.list_actions(lnn_shuffled)
+    logging.info(f"Actions: {actions}")
+
+
 
     # Quit pygame
     pygame.quit()
